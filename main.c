@@ -45,13 +45,16 @@
 *******************************************************************************/
 #include "cyhal.h"
 #include "cybsp.h"
-
+#include "stdio.h"
 
 #include "cy8ckit_028_sense.h"
 #include "GUI.h"
-#include "hardware_cmd.h"
 
-xensiv_dps3xx_t pressure_sensor;
+// Define function
+void lcd_print_top(const char * s);
+void lcd_print_bot(const char * s);
+void lcd_print_line_n(const char * s,int linenum);
+
 cyhal_i2c_t i2c;
 cyhal_i2c_cfg_t i2c_cfg = {
     .is_slave = false,
@@ -60,46 +63,9 @@ cyhal_i2c_cfg_t i2c_cfg = {
 };
 
 
-#define MTB_DPS3XX_I2C_ADDR_DEFAULT 0x77
-
-/*******************************************************************************
-* Macros
-*******************************************************************************/
-
-
-/*******************************************************************************
-* Global Variables
-*******************************************************************************/
-
-
-/*******************************************************************************
-* Function Prototypes
-*******************************************************************************/
-void floatToStr(uint8_t *out, float x,int decimalPoint);
-
-/*******************************************************************************
-* Function Definitions
-*******************************************************************************/
-
-/*******************************************************************************
-* Function Name: main
-********************************************************************************
-* Summary:
-* This is the main function for CPU. It...
-*    1.
-*    2.
-*
-* Parameters:
-*  void
-*
-* Return:
-*  int
-*
-*******************************************************************************/
 int main(void)
 {
     cy_rslt_t result;
-
     char str[80];
 
     /* Initialize the device and board peripherals */
@@ -107,15 +73,10 @@ int main(void)
     CY_ASSERT(result == CY_RSLT_SUCCESS);
     __enable_irq();
 
-
     /* Initialize i2c */
     result = cyhal_i2c_init(&i2c, CY8CKIT_028_SENSE_PIN_I2C_SDA, CY8CKIT_028_SENSE_PIN_I2C_SCL, NULL);
     CY_ASSERT(result == CY_RSLT_SUCCESS);
     result = cyhal_i2c_configure(&i2c, &i2c_cfg);
-    CY_ASSERT(result == CY_RSLT_SUCCESS);
-
-    /* Initialize pressure sensor */
-    result = xensiv_dps3xx_mtb_init_i2c(&pressure_sensor, &i2c, MTB_DPS3XX_I2C_ADDR_DEFAULT);
     CY_ASSERT(result == CY_RSLT_SUCCESS);
 
     /* Initialize the OLED display */
@@ -126,35 +87,37 @@ int main(void)
 
     for (;;)
     {
-        /* Get the pressure and temperature data and print the results to the UART */
-        float pressure, temperature;
-
-		// Gets the current pressure and temperature values from the sensor
-		// HOT_EXE_1
-		// 1) Take reference from the "XENSIV DPS3xx Pressure Sensor (sensor-xensiv-dps3xx)"
-		// 2) Use the "API Reference" >> "Functions"
-		// 3) Use the API to read Pressure and Temperature
-		// 4) Hint:
-		//		- Use the below variables as the input of your API
-		//		- Pressure sensor object >> "pressure_sensor"
-		//		- Data >> "pressure, temperature"
-       
-        xensiv_dps3xx_read(&pressure_sensor, &pressure, &temperature);
-        sprintf(str,"Pressure: %4.2f",pressure);
+        sprintf(str,"print top");
         lcd_print_top(str);
-        sprintf(str,"Temp: %2.2f",temperature);
-        lcd_print_line_n(str,3);
-        led_blue_on();
+
+        sprintf(str,"print line 2");
+        lcd_print_line_n(str,2);
+
+        sprintf(str,"print line 4");
+        lcd_print_line_n(str,4);
+
+        lcd_print_bot("print bottom");
         cyhal_system_delay_ms(1000);
-        led_blue_off();
-        led_green_on();
-        cyhal_system_delay_ms(1000);
-        led_green_off();
-        led_red_on();
-        cyhal_system_delay_ms(1000);
-        led_red_off();
     }
+
 }
 
 
-/* [] END OF FILE */
+
+ // Create function
+
+void lcd_print_top(const char * s){
+	GUI_GotoXY(0,0);
+	GUI_DispString(s);
+}
+
+void lcd_print_bot(const char * s){
+	GUI_GotoXY(0,50);
+	GUI_DispString(s);
+}
+
+void lcd_print_line_n(const char * s,int linenum){ //linenum is 1-6
+	int line = (linenum-1)*10;
+	GUI_GotoXY(0,line);
+	GUI_DispString(s);
+}
